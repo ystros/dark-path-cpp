@@ -1,0 +1,125 @@
+//----------------------------------------------------------------------------
+#ifndef DARKPATH_vectorH
+#define DARKPATH_vectorH
+//----------------------------------------------------------------------------
+#include <sstream>
+//----------------------------------------------------------------------------
+namespace DarkPath
+{
+    namespace Policy
+    {
+        //====================================================================
+        /*  policy
+        */
+        //====================================================================
+        template <unsigned int i>
+        struct IndexStartPolicy {
+            enum {
+                StartingIndex = i
+            }
+        };
+
+        typedef IndexStartPolicy<0> ZeroBasedIndexPolicy;
+        typedef IndexStartPolicy<1> OneBasedIndexPolicy;
+
+        template <typename SizeT,
+            typename IndexConstantPolicy = ZeroBasedIndexPolicy>
+        struct QuickIndex
+        {
+            void OnIndex(SizeT& index, SizeT size) throw ()
+            {
+                index -= IndexConstantPolicy::StartingIndex;
+            }
+        };
+
+        template <typename SizeT,
+            typename IndexConstantPolicy = ZeroBasedIndexPolicy>
+        struct SafeExceptionIndex
+        {
+            void OnIndex(SizeT& index, SizeT size)
+                throw (std::out_of_range)
+            {
+                index -= IndexConstantPolicy::StartingIndex;
+                if (index < 0 || index > size)
+                {
+                    std::ostringstream s;
+                    s   << "Policy.SafeExceptionIndex: Index "
+                        << index + IndexConstantPolicy::StartingIndex
+                        << " is not within bounds ["
+                        << IndexConstantPolicy::StartingIndex
+                        << ", "
+                        << IndexConstantPolicy::StartingIndex + size
+                        << "].";
+                    throw std::out_of_range(s.str());
+                }
+            }
+        };
+
+        template <typename SizeT,
+            typename IndexConstantPolicy = ZeroBasedIndexPolicy>
+        struct SafeAssertIndex
+        {
+            void OnIndex(SizeT& index, SizeT size)
+                throw ()
+            {
+                index -= IndexConstantPolicy::StartingIndex;
+                std::assert(0 <= index && index < size);
+            }
+        };
+
+        template <typename SizeT,
+            typename IndexConstantPolicy = ZeroBasedIndexPolicy>
+        struct WrapIndex
+        {
+            void OnIndex(SizeT& index, SizeT size)
+                throw ()
+            {
+                index -= IndexConstantPolicy::StartingIndex;
+                index %= size;
+            }
+        };
+
+        template <typename SizeT,
+            typename IndexConstantPolicy = ZeroBasedIndexPolicy>
+        struct ResizeIndex
+        {
+            void OnIndex(SizeT& index, SizeT size)
+                throw ()
+            {
+                index -= IndexConstantPolicy::StartingIndex;
+                if (index >= size)
+                {
+                    // resize(index)
+                }
+            }
+        };
+
+    }
+
+    //========================================================================
+    /*
+        Vector of T
+        Indexing constants
+            start  - default 0
+            max    - ???
+        Indexing policy
+            quick  - no range check
+            safe   - check range, throw on out of bounds
+            wrap   - check range, newIndex = (index % size + start)
+            resize - check range, if over then resize.
+        Sizing policy
+            fixed   - cannot resize after initial allocation
+            sizable - can resize
+        Allocator
+    */
+    template <typename T>
+    class vector
+    {
+    };
+
+    //========================================================================
+}
+//----------------------------------------------------------------------------
+#endif
+//----------------------------------------------------------------------------
+
